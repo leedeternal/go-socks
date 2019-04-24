@@ -1,4 +1,5 @@
 // Copyright 2012 Samuel Stauffer. All rights reserved.
+// Copyright (c) 2019 The Decred developers
 // Use of this source code is governed by a 3-clause BSD
 // license that can be found in the LICENSE file.
 
@@ -21,6 +22,7 @@ Example http client over SOCKS5:
 package socks
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
@@ -84,14 +86,23 @@ type Proxy struct {
 }
 
 func (p *Proxy) Dial(network, addr string) (net.Conn, error) {
-	return p.dial(network, addr, 0)
+	var d net.Dialer
+	return p.dial(context.Background(), &d, network, addr)
+}
+
+func (p *Proxy) DialContext(ctx context.Context, network, addr string) (net.Conn, error) {
+	var d net.Dialer
+	return p.dial(ctx, &d, network, addr)
 }
 
 func (p *Proxy) DialTimeout(network, addr string, timeout time.Duration) (net.Conn, error) {
-	return p.dial(network, addr, timeout)
+	d := net.Dialer{
+		Timeout: timeout,
+	}
+	return p.dial(context.Background(), &d, network, addr)
 }
 
-func (p *Proxy) dial(network, addr string, timeout time.Duration) (net.Conn, error) {
+func (p *Proxy) dial(ctx context.Context, dialer *net.Dialer, network, addr string) (net.Conn, error) {
 	host, strPort, err := net.SplitHostPort(addr)
 	if err != nil {
 		return nil, err
@@ -101,7 +112,7 @@ func (p *Proxy) dial(network, addr string, timeout time.Duration) (net.Conn, err
 		return nil, err
 	}
 
-	conn, err := net.DialTimeout("tcp", p.Addr, timeout)
+	conn, err := dialer.DialContext(ctx, "tcp", p.Addr)
 	if err != nil {
 		return nil, err
 	}
