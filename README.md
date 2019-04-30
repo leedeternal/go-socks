@@ -1,7 +1,8 @@
 SOCKS5 Proxy Package for Go
 ===========================
 
-Documentation: <http://godoc.org/github.com/btcsuite/go-socks/socks>
+[![Build Status](https://travis-ci.org/decred/go-socks.png?branch=master)](https://travis-ci.org/decred/go-socks)
+[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](http://godoc.org/github.com/decred/go-socks)
 
 License
 -------
