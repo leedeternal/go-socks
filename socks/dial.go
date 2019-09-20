@@ -116,6 +116,9 @@ func (p *Proxy) dial(ctx context.Context, dialer *net.Dialer, network, addr stri
 	if err != nil {
 		return nil, err
 	}
+	if deadline, exists := ctx.Deadline(); exists {
+		conn.SetDeadline(deadline)
+	}
 
 	var user, pass string
 	if p.TorIsolation {
@@ -153,7 +156,6 @@ func (p *Proxy) dial(ctx context.Context, dialer *net.Dialer, network, addr stri
 	}
 
 	// Server's auth choice
-
 	if _, err := io.ReadFull(conn, buf[:2]); err != nil {
 		conn.Close()
 		return nil, err
@@ -215,12 +217,10 @@ func (p *Proxy) dial(ctx context.Context, dialer *net.Dialer, network, addr stri
 	}
 
 	// Server response
-
 	if _, err := io.ReadFull(conn, buf[:4]); err != nil {
 		conn.Close()
 		return nil, err
 	}
-
 	if buf[0] != protocolVersion {
 		conn.Close()
 		return nil, ErrInvalidProxyResponse
@@ -272,6 +272,7 @@ func (p *Proxy) dial(ctx context.Context, dialer *net.Dialer, network, addr stri
 	}
 	paddr.Port = int(buf[0])<<8 | int(buf[1])
 
+	conn.SetDeadline(time.Time{})
 	return &proxiedConn{
 		conn:       conn,
 		boundAddr:  paddr,
