@@ -6,6 +6,7 @@ package socks
 
 import (
 	"net"
+	"sync"
 	"time"
 )
 
@@ -13,6 +14,8 @@ type proxiedConn struct {
 	conn       net.Conn
 	remoteAddr *ProxiedAddr
 	boundAddr  *ProxiedAddr
+	pool       *Pool
+	closeOnce  sync.Once
 }
 
 func (c *proxiedConn) Read(b []byte) (int, error) {
@@ -24,7 +27,15 @@ func (c *proxiedConn) Write(b []byte) (int, error) {
 }
 
 func (c *proxiedConn) Close() error {
-	return c.conn.Close()
+	err := c.conn.Close()
+	c.closeOnce.Do(func() {
+		if c.pool != nil {
+			c.pool.mtx.Lock()
+			c.pool.numOpen--
+			c.pool.mtx.Unlock()
+		}
+	})
+	return err
 }
 
 func (c *proxiedConn) LocalAddr() net.Addr {

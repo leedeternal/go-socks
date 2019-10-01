@@ -35,16 +35,12 @@ import (
 const (
 	protocolVersion = 5
 
-	defaultPort = 1080
-
 	authNone             = 0
 	authGssAPI           = 1
 	authUsernamePassword = 2
 	authUnavailable      = 0xff
 
-	commandTCPConnect   = 1
-	commandTCPBind      = 2
-	commandUDPAssociate = 3
+	commandTCPConnect = 1
 
 	addressTypeIPv4   = 1
 	addressTypeDomain = 3
@@ -102,7 +98,7 @@ func (p *Proxy) DialTimeout(network, addr string, timeout time.Duration) (net.Co
 	return p.dial(context.Background(), &d, network, addr)
 }
 
-func (p *Proxy) dial(ctx context.Context, dialer *net.Dialer, network, addr string) (net.Conn, error) {
+func (p *Proxy) dial(ctx context.Context, dialer *net.Dialer, network, addr string) (*proxiedConn, error) {
 	host, strPort, err := net.SplitHostPort(addr)
 	if err != nil {
 		return nil, err
